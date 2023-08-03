@@ -1,2 +1,4 @@
 # Fisheries-Data-Analysis
 Fisheries Data Analysis using Regression and Classification
+
+The kaggle fish market dataset was chosen for the study. The purpose of using this dataset is to determine the fish’s breed and to see if the length, width, and height are relative conditions, which is significant in fishery assessment studies since it offers information on the fish’s growth, wellbeing, and fitness in sea habitat. Understanding what species exist and how to identify them is critical for biologists and the general public. When species become extinct, biological variation is lost, and only by understanding species can we change the social, political, and economic processes that drive conservation efforts. The most important takeovers are improvements to fish research in every body of water.
