@@ -1,0 +1,254 @@
+---
+title: Fisheries Data Analysis using Regression and Classification   
+subtitle:  'First Project Report, MATH 8050, Fall 2022'
+author: |
+  | **Raghavendra Niteesh Ganugapati, C52595319**
+  | **Adithya Ravi, C09059838**
+  | **Srivatsa Kandalam, C75941323**
+  | **Ashwini Balasubramanian, C31547239**
+
+date: "Due October 10, 11:59PM"
+abstract: |
+  Using the kaggle dataset "Fish Market" to predict the species and weight of fish with the help of other predictors in the dataset. 
+output: 
+  pdf_document:
+    number_sections: true
+urlcolor: blue
+linkcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Introduction
+
+The kaggle fish market dataset was chosen for the study. The purpose of using this dataset is to determine the fish's breed and to see if the length, width, and height are relative conditions, which is significant in fishery assessment studies since it offers information on the fish's growth, wellbeing, and fitness in sea habitat.
+Understanding what species exist and how to identify them is critical for biologists and the general public. When species become extinct, biological variation is lost, and only by understanding species can we change the social, political, and economic processes that drive conservation efforts. The most important takeovers are improvements to fish research in every body of water. Estimation of individual fish species populations in a given water mass. Getting additional information about fish without causing any harm to them.
+
+# Data
+
+## The Dataset:
+
+The dataset chosen is Fish Market dataset which is in csv form, and taken from Kaggle and the data was updated in 2019. This dataset is a record of 7 common different fish species in fish market sales. The total number of observations is 159. It consists of 7 columns/variables:
+1. Species : Species name of the fish
+2. Weight : Weight of the fish in g
+3. Length1 : Vertical length in cm 
+4. Length2 : Diagonal length in cm 
+5. Length3 : Cross length in cm 
+6. Height : Height in cm
+7. Width : Diagonal width in cm
+Thus the dimensions of this dataset is 159x7. Here Species is a qualitative data while the rest are quantitative data. 
+
+## Predictors and Response:
+
+In this project we are trying to predict the weight and species of the fish using the length, height and width of the fish.
+Thus the predictor variables are Length1, Length2, Length3, Height and Width. The response variables are Species and Weight.
+
+## Access to the Dataset:
+
+The Fish Market Dataset is available in Kaggle. Below is a link to it.
+
+[Fish Market Dataset](https://www.kaggle.com/datasets/aungpyaeap/fish-market?resource=download)
+
+# Exploratory Data Analysis 
+
+## Exploratory Data Analysis (EDA)
+
+```{r warning=FALSE}
+
+library(dplyr) #import dplyr
+library(ggplot2)
+
+
+df_fish <-read.csv("Fish.csv",header = TRUE, sep=",", fileEncoding = "UTF-8-BOM")
+head(df_fish)
+```
+
+```{r}
+
+rows<-nrow(df_fish)
+columns<-ncol(df_fish)
+print(paste(rows,",",columns,"The number of rows and columns respectively"))
+
+```
+
+```{r}
+summary(df_fish)
+
+```
+
+The Quantitative in the given data set is Weight, Length1 ,Length2 ,Length3 , Height, Width.  
+Here Length1 is Vertical Length in cm.  
+Length2 is Diagonal Length in cm.  
+Length3 is Cross Length in cm.  
+Height and Width are the dimensions of the fish.  
+  
+  
+To Check whether the data set has any NA values.
+```{r}
+cbind(lapply(lapply(df_fish, is.na),sum))
+```
+We didn't get any NA values.  
+
+Changing the column names 
+
+```{r}
+colnames(df_fish)<-c("Species","Weight","Verticallength","Diagonallength",
+                     "Crosslength","Height","Width")
+head(df_fish)
+```
+
+
+Removing 0 values from the data set.
+```{r}
+length(which(df_fish == 0))
+
+
+```
+We found one zero value, by using filter we are removing the zero value
+```{r}
+df_fish<-filter(df_fish,Weight>0,Verticallength>0,Diagonallength>0,Crosslength>0)
+
+length(which(df_fish == 0))
+
+
+```
+
+```{r}
+df_fish<-filter(df_fish,Weight>=50)
+
+```
+
+
+
+```{r}
+ggplot(df_fish,aes(x=Species,y=Weight,fill=Species))+geom_boxplot()+
+  scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Weight")
+
+```
+
+
+
+```{r}
+
+ggplot(df_fish,aes(x=Species,y=Verticallength,fill=Species))+geom_boxplot()+
+  scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Vertical Length")+
+  ylab("Vertical Length")
+
+
+```
+
+```{r}
+ggplot(df_fish,aes(x=Species,y=Diagonallength,fill=Species))+geom_boxplot()+
+  scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Diagonal Length")+
+  ylab("Diagonal Length")
+
+```
+
+
+
+```{r}
+
+
+ggplot(df_fish,aes(x=Species,y=Height,fill=Species))+geom_boxplot()+
+    scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Height")+
+  ylab("Height")
+
+```
+
+
+
+```{r}
+ggplot(df_fish,aes(x=Species,y=Crosslength,fill=Species))+geom_boxplot()+
+  scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Cross Length")+
+  ylab("Cross Length")
+
+```
+
+
+```{r}
+ggplot(df_fish,aes(x=Species,y=Width,fill=Species))+geom_boxplot()+
+   scale_fill_brewer(palette = "Set2")+ggtitle("BoxPlot ~ Width")
+   
+
+```
+We can see that there is at least an outliers for the Roach out of all fish types.  
+We will use Quantile and try to remove the outliers.  
+
+```{r}
+df_roach<-df_fish %>% filter(df_fish$Species == 'Roach')
+quantile(df_roach$Weight)
+```
+
+We will remove the outliers which above 177.25 in weight.
+
+```{r}
+
+df_roach<-df_roach %>% filter(Weight>177.25)
+nrow(df_roach)
+```
+To remove the outliers data.
+
+```{r}
+
+df_fish <-anti_join(df_fish,df_roach)
+nrow(df_fish)
+
+```
+Checking the outliers.
+
+```{r warning=TRUE}
+library(tidyverse)
+
+df.boxplot<- df_fish%>% pivot_longer(cols=Weight:Width,names_to="variable",
+                                     values_to="value")
+
+ggplot(data = df.boxplot, aes(x = Species , y = value)) + geom_boxplot() +
+  facet_wrap(facets = ~variable, scales = 'free')
+
+```
+
+
+
+We need to check correlation between all variables.  
+We are using charts.correlation.  
+
+```{r warning=FALSE}
+library(GGally)
+ggpairs(df_fish[2:7])
+
+```
+
+From correlation plot we can drop two variables Cross length and Diagonal length.  
+
+```{r}
+df_fish<-df_fish[-c(4:5)]
+str(df_fish)
+```
+We are left with 135 observations and 5 variables.
+
+
+## Arguments to support the statistical models/techniques that will be selected to analyze the dataset
+
+For fish market, 2 important information that determine fish price are fish species and fish weight. We would like to predict 
+1. The species of the fish - Classification 
+2. The weight of the fish without weighing it - Regression
+
+For the classification problem, we propose to use a naive bayes model. Based on the Bayes theorem, the Naive Bayes Classifier gives the conditional probability of an event A given event B. Some benefits of using the naive bayes model are that is simple, doesn't require much training data, is not sensitive to irrelevant features, is fast and can make real-time predictions. 
+
+For the regression problem we use a simple machine learning prediction using Multiple Linear Regression Model based on the information of other columns. MLR allows us to assess the relationship between the outcome and the predictor variables as well as the importance of each predictor to the relationship.
+
+# Plan for the Second Report
+
+In the second report we are planning to implement two statistical models including the one described at the end of the previous section. This includes using regression to predict the Weight of the fish and classification to predict to Species of the fish. We also plan to refine our model if necessary and test our model by running it with the test data. 
+
+# Explain the contribution of the team member:
+
+1. Niteesh - Data Cleaning  
+2. Adithya - Outliers Checking after performing the Outlier Elimination based on Weight Variable  
+3. Srivatsa - Correlation Checking  
+4. Ashwini - Detecting outliers and checking quantiles
+
+This report was the result of a combined and equal effort from all four team members. 
